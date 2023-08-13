@@ -148,6 +148,8 @@ static PhysicsServer2D *physics_server_2d = nullptr;
 static NavigationServer3D *navigation_server_3d = nullptr;
 static NavigationServer2D *navigation_server_2d = nullptr;
 static ThemeDB *theme_db = nullptr;
+static bool physics_2d_step_second_pass = false;
+static bool physics_3d_step_second_pass = false;
 // We error out if setup2() doesn't turn this true
 static bool _start_success = false;
 
@@ -299,6 +301,9 @@ void initialize_physics() {
 	}
 	ERR_FAIL_COND(!physics_server_2d);
 	physics_server_2d->init();
+
+	physics_2d_step_second_pass = GLOBAL_GET("physics/2d/step_second_pass");
+	physics_3d_step_second_pass = GLOBAL_GET("physics/3d/step_second_pass");
 }
 
 void finalize_physics() {
@@ -3430,9 +3435,15 @@ bool Main::iteration() {
 
 		PhysicsServer3D::get_singleton()->end_sync();
 		PhysicsServer3D::get_singleton()->step(physics_step * time_scale);
+		if (physics_3d_step_second_pass) {
+			PhysicsServer3D::get_singleton()->step_second_pass();
+		}
 
 		PhysicsServer2D::get_singleton()->end_sync();
 		PhysicsServer2D::get_singleton()->step(physics_step * time_scale);
+		if (physics_2d_step_second_pass) {
+			PhysicsServer2D::get_singleton()->step_second_pass();
+		}
 
 		message_queue->flush();
 
